@@ -1,7 +1,6 @@
 package com.zero.cdownload.util;
 
 import android.text.TextUtils;
-import android.util.Log;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -15,7 +14,7 @@ import java.net.URLEncoder;
 public class PathUtil {
     public static String getLocalFilePath(String netUrl, String cacheFolder, boolean needMd5Name) {
         if (TextUtils.isEmpty(netUrl) || TextUtils.isEmpty(cacheFolder)) {
-            Log.e("HongLi", "in getLocalFilePath netUrl or cacheFolder is empty.");
+            LogTool.e("PathUtil", "in getLocalFilePath netUrl or cacheFolder is empty.");
             return "";
         }
 

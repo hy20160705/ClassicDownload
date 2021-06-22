@@ -21,11 +21,15 @@ public class CDownloadConfig {
     private ConnectConfig connectConfig;
     // 是否需要检查下载文件的大小
     private boolean needCheckFileLength = ConfigConstant.NEED_CHECK_DOWNLOAD_FILE_LENGTH;
+    /**
+     * 是否开启日志
+     */
+    private boolean enableLog;
 
-    private CDownloadConfig(){
+    private CDownloadConfig() {
     }
 
-    public static CDownloadConfig build(){
+    public static CDownloadConfig build() {
         return new CDownloadConfig();
     }
 
@@ -80,6 +84,15 @@ public class CDownloadConfig {
 
     public CDownloadConfig setNeedCheckFileLength(boolean needCheckFileLength) {
         this.needCheckFileLength = needCheckFileLength;
+        return this;
+    }
+
+    public boolean isEnableLog() {
+        return enableLog;
+    }
+
+    public CDownloadConfig setEnableLog(boolean enableLog) {
+        this.enableLog = enableLog;
         return this;
     }
 }

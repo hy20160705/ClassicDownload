@@ -4,5 +4,47 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="262dp"
+        android:onClick="startDownload"
+        android:text="下载" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:onClick="pause"
+        android:text="停止" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="257dp"
+        android:onClick="clearCache"
+        android:text="清除缓存" />
+
+    <ProgressBar
+        android:id="@+id/down_loading"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="6dp"
+        android:layout_marginTop="12dp"
+        android:progressDrawable="@drawable/pg_version_bg"
+        tools:progress="45" />
+
+    <TextView
+        android:id="@+id/tv_progress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/down_loading"
+        android:textColor="#333333"
+        android:textSize="24sp" />
+
 
 </RelativeLayout>

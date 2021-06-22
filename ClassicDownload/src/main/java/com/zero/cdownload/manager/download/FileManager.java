@@ -1,14 +1,17 @@
 package com.zero.cdownload.manager.download;
 
+import android.content.Context;
 import android.os.Environment;
 import android.text.TextUtils;
-import android.util.Log;
+
+import androidx.annotation.IntDef;
 
 import com.zero.cdownload.config.CDownloadConfig;
 import com.zero.cdownload.constants.ConfigConstant;
 import com.zero.cdownload.entity.CDownloadTaskEntity;
 import com.zero.cdownload.util.DownloadCheckUtil;
 import com.zero.cdownload.util.FileUtil;
+import com.zero.cdownload.util.LogTool;
 import com.zero.cdownload.util.PathUtil;
 
 import java.io.File;
@@ -28,15 +31,22 @@ import java.net.URL;
 public class FileManager {
 
     private static final String TAG = FileManager.class.getCanonicalName();
-
     private static int connectTimeOut = ConfigConstant.TIME_DEFAULT_CONNECT_OUT;
     private static int readTimeOut = ConfigConstant.TIME_DEFAULT_READ_OUT;
     private static boolean needCheckFileLength = ConfigConstant.NEED_CHECK_DOWNLOAD_FILE_LENGTH;
-
     private static int bufferSize = ConfigConstant.BUFFER_DEFAULT_DOWNLOAD;
     private static String cachePath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/com/zero/cdownload";
 
-    public static void init(CDownloadConfig downloadConfig) {
+    @IntDef(value = {DownloadSate.PENDING, DownloadSate.DOWNLOADING, DownloadSate.COMPLETED, DownloadSate.CANCEL})
+    public @interface DownloadSate {
+        int PENDING = 1;
+        int DOWNLOADING = 2;
+        int COMPLETED = 3;
+        int CANCEL = 4;
+    }
+
+    public static void init(CDownloadConfig downloadConfig, Context context) {
+        Context temContext = context.getApplicationContext();
         HTTPSTrustManager.allowAllSSL();
         if (null == downloadConfig) {
             return;
@@ -47,20 +57,26 @@ public class FileManager {
             readTimeOut = downloadConfig.getConnectConfig().getReadTimeOut() != 0 ? downloadConfig.getConnectConfig().getReadTimeOut() : ConfigConstant.TIME_DEFAULT_READ_OUT;
             bufferSize = downloadConfig.getConnectConfig().getReadBufferSize() != 0 ? downloadConfig.getConnectConfig().getReadBufferSize() : ConfigConstant.BUFFER_DEFAULT_DOWNLOAD;
         }
-        if (!TextUtils.isEmpty(downloadConfig.getDiskCachePath())) {
-            cachePath = downloadConfig.getDiskCachePath();
+        File dir;
+        // 优先外部存储
+        if (FileUtil.externalWritable()) {
+            dir = temContext.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+        } else {
+            dir = new File(temContext.getFilesDir(), Environment.DIRECTORY_DOWNLOADS);
         }
+        cachePath = dir.getAbsolutePath() + File.separator + "apk";
+        downloadConfig.setDiskCachePath(cachePath);
     }
 
     public static void startDownload(CDownloadTaskEntity taskEntity) {
         if (taskEntity == null || taskEntity.getDownloadListener() == null) {
-            Log.e(TAG, "in startDownload task entity is null or download listener is null.");
+            LogTool.e(TAG, "in startDownload task entity is null or download listener is null.");
             return;
         }
         taskEntity.getDownloadListener().onPreStart();
         String localFilePath = PathUtil.getLocalFilePath(taskEntity.getUrl(), cachePath, taskEntity.isNeedMD5Name());
         String templocalFilePath = PathUtil.getLocalFilePath(taskEntity.getUrl(), cachePath + "/" + ConfigConstant.DEFAULT_TEMP_FOLDER_NAME, taskEntity.isNeedMD5Name());
-        Log.d(TAG, "templocalFilePath:" + templocalFilePath);
+        LogTool.d(TAG, "templocalFilePath:" + templocalFilePath);
         if (FileUtil.isExist(localFilePath) && DownloadCheckUtil.checkFileDownloadOk(taskEntity.getUrl(), localFilePath, needCheckFileLength)) {
             //文件已经下载成功,不需要执行下载操作
             taskEntity.getDownloadListener().onComplete(localFilePath);
@@ -99,7 +115,7 @@ public class FileManager {
         if (TextUtils.isEmpty(fileUrl) || TextUtils.isEmpty(localFilePath) || taskEntity == null || taskEntity.getDownloadListener() == null) {
             return false;
         }
-        Log.d(TAG, "start download file:" + fileUrl);
+        LogTool.d(TAG, "start download file:" + fileUrl);
         File file = new File(localFilePath);
         long size = 0;
         if (file.exists()) {
@@ -138,14 +154,14 @@ public class FileManager {
                 boolean hasCancel = false;
                 while ((len = in.read(b)) != -1) {
                     if (taskEntity.isHasCancel()) {
-                        Log.e(TAG, "cancel download:" + fileUrl);
+                        LogTool.e(TAG, "cancel download:" + fileUrl);
                         taskEntity.getDownloadListener().onCancel();
                         hasCancel = true;
                         break;
                     }
                     out.write(b, 0, len);
                     currentSize += len;
-                    taskEntity.getDownloadListener().onProgress(maxSize, currentSize);
+                    taskEntity.getDownloadListener().onProgress(maxSize + size, currentSize);
                 }
                 out.close();
                 downloadSuccess = !hasCancel;
@@ -158,7 +174,7 @@ public class FileManager {
         } catch (MalformedURLException e) {
             e.printStackTrace();
             downloadSuccess = downloadFileNormal(fileUrl, localFilePath, taskEntity);
-            Log.e(TAG, "error url:" + fileUrl);
+            LogTool.e(TAG, "error url:" + fileUrl);
         } catch (IOException e) {
             e.printStackTrace();
             downloadSuccess = downloadFileNormal(fileUrl, localFilePath, taskEntity);
@@ -181,7 +197,7 @@ public class FileManager {
                 downloadSuccess = false;
             }
         }
-        Log.d(TAG, "end download file:" + fileUrl);
+        LogTool.d(TAG, "end download file:" + fileUrl);
         return downloadSuccess;
     }
 
@@ -238,7 +254,7 @@ public class FileManager {
                 boolean hasCancel = false;
                 while ((len = in.read(b)) != -1) {
                     if (taskEntity.isHasCancel()) {
-                        Log.e(TAG, "cancel download:" + fileUrl);
+                        LogTool.e(TAG, "cancel download:" + fileUrl);
                         taskEntity.getDownloadListener().onCancel();
                         hasCancel = true;
                         break;

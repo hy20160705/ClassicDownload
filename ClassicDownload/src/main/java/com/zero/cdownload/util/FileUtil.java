@@ -1,5 +1,6 @@
 package com.zero.cdownload.util;
 
+import android.os.Environment;
 import android.text.TextUtils;
 
 import java.io.File;
@@ -263,5 +264,14 @@ public class FileUtil {
             e.printStackTrace();
         }
         return true;
+    }
+
+    /**
+     * 外部存储是否可写入
+     *
+     * @return
+     */
+    public static boolean externalWritable() {
+        return Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()) || !Environment.isExternalStorageRemovable();
     }
 }
